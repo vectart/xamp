@@ -38,7 +38,7 @@
 		if($type === 'path' && isset($xgen->path[$value-1]))
 			return $xgen->path[$value-1];
 
-		return '';
+		return null;
 	}
 
 	function insertXML($matches)
@@ -93,11 +93,9 @@
 	$s = split('/', $request);
 	foreach ($s as $p) if (!empty ($p)) $path[] = $p;
 
-	if(DB_USER) $db = new dbcon (DB_USER, DB_PASS, DB_NAME, DB_HOST, DB_PORT, true);
-	
 	$xgen = new xgen ($request, $path);
 	$xgen -> start();
-	unset($db);
+	unset($xgen -> dbcon);
 	
 	if(is_file($xgen -> xsl))
 	{
