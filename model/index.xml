@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!DOCTYPE xml SYSTEM "../view/entities.dtd">
+<!DOCTYPE root SYSTEM "../view/entities.dtd">
 <root xmlns:xi="http://www.w3.org/2001/XInclude">
 
 	<page match="/">
