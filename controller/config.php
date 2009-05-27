@@ -1,11 +1,11 @@
 <?php
 	define ('DB_HOST', 'localhost');
 	define ('DB_PORT', '3306');
-	define ('DB_USER', 'user');
-	define ('DB_PASS', 'password');
-	define ('DB_NAME', 'database');
+	define ('DB_USER', '');
+	define ('DB_PASS', '');
+	define ('DB_NAME', '');
 
-	define ('SITE_PATH', '/var/www/');
+	define ('SITE_PATH', '../');
 	define ('VIEW_PATH', SITE_PATH.'view/');
 	define ('MODEL_PATH', SITE_PATH.'model/');
 	define ('CONTROLLER_PATH', SITE_PATH.'controller/');

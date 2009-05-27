@@ -31,11 +31,14 @@
     			
 			
 		public function xparse () {
-			$this -> dbcon = dbcon::instance ();
-			$this -> dbcon -> query ("SET NAMES utf8");
-			$this -> dbcon -> query ("SET collation_connection = 'utf8_general_ci'");
-			$tables = $this -> dbcon -> query ("show table status") -> fetch_assoc_all();
-			foreach($tables as $table) $this -> tableStatus[$table['Name']] = $table['Update_time'];
+			if(DB_USER)
+			{
+				$this -> dbcon = dbcon::instance ();
+				$this -> dbcon -> query ("SET NAMES utf8");
+				$this -> dbcon -> query ("SET collation_connection = 'utf8_general_ci'");
+				$tables = $this -> dbcon -> query ("show table status") -> fetch_assoc_all();
+				foreach($tables as $table) $this -> tableStatus[$table['Name']] = $table['Update_time'];
+			}
 		}	
 			
 			

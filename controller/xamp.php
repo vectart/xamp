@@ -93,13 +93,11 @@
 	$s = split('/', $request);
 	foreach ($s as $p) if (!empty ($p)) $path[] = $p;
 
-	$db = new dbcon (DB_USER, DB_PASS, DB_NAME, DB_HOST, DB_PORT, true);
+	if(DB_USER) $db = new dbcon (DB_USER, DB_PASS, DB_NAME, DB_HOST, DB_PORT, true);
 	
 	$xgen = new xgen ($request, $path);
 	$xgen -> start();
 	unset($db);
-	
-	$_POST = array();
 	
 	if(class_exists('xsltCache'))
 	{
