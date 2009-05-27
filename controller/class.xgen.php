@@ -33,20 +33,29 @@
 		public function start()	
 		{
 			$script_name = empty($this -> path) ? 'index' : $this -> path[0];
-			$this -> config = $this -> load (MODEL_PATH.$script_name.'.xml');
-			$pages = $this -> config -> getElementsByTagName ('page');
+			$script_xml = MODEL_PATH.$script_name.'.xml';
+			if(is_file($script_xml))
+			{
+				$this -> config = $this -> load ($script_xml);
+				$pages = $this -> config -> getElementsByTagName ('page');
 
-			foreach ($pages as $page) {
+				foreach ($pages as $page) {
 				
-				if (strlen ($match = $page -> getAttribute ('match')))
+					if (strlen ($match = $page -> getAttribute ('match')))
 
-					if (preg_match ('#^'.$match.'$#', $this -> request, $matches)) {
-						if (isset($_SERVER['HTTP_X_REQUESTED_WITH'])) {
-							$page -> setAttribute('ajax', 'true'); 
-						}
-						$this -> parsePage ($page);
-						break; 
-					}	
+						if (preg_match ('#^'.$match.'$#', $this -> request, $matches)) {
+							if (isset($_SERVER['HTTP_X_REQUESTED_WITH'])) {
+								$page -> setAttribute('ajax', 'true'); 
+							}
+							$this -> parsePage ($page);
+							break; 
+						}	
+				}
+			}
+			else
+			{
+				header("HTTP/1.0 404 Not Found");
+				$this -> dom -> appendChild($this -> simpleError('error', '404'));
 			}
 				
 			$this -> xml = $this -> dom;
