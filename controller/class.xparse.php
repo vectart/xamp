@@ -135,27 +135,34 @@ if(!$xml)
 			$this -> join = '';
 			$name = $node -> hasAttribute ('name') ? $node -> getAttribute ('name') : 'select';			
 			$table = $node -> getAttribute ('table');
-			if($node -> childNodes -> length == 0)
+			$countFields = 0;
+			foreach ($node -> childNodes as $child) {
+				if ($this -> isXmlNode ($child)) {
+					if ($child -> nodeName == 'where') continue;
+					if (!$child -> hasChildNodes ()) {
+						$alias = $child -> hasAttribute ('as') ? $child -> getAttribute ('as') : '';
+						$sql .= ($child -> hasAttribute ('value')) ? $child -> getAttribute ('value') : (  $child -> hasAttribute ('function') ? $child -> getAttribute ('function').'('.$table.'.'.str_replace ('allfields', '*', $child -> nodeName).')' : $table.'.'.str_replace ('allfields', '*', $child -> nodeName)  );
+						$sql .=	(!empty ($alias) ? ' AS '.$alias : '').', ';
+						$countFields++;
+					}else	
+						$sql .= $this -> parseJoin ($child, $table);					
+				}		
+			}
+			if($countFields == 0)
 			{
 				$sql .= '*  ';
 			}
-			else
-			{
-				foreach ($node -> childNodes as $child) {
-					if ($this -> isXmlNode ($child)) {
-						if ($child -> nodeName == 'where') continue;
-						if (!$child -> hasChildNodes ()) {
-							$alias = $child -> hasAttribute ('as') ? $child -> getAttribute ('as') : '';
-							$sql .= ($child -> hasAttribute ('value')) ? $child -> getAttribute ('value') : (  $child -> hasAttribute ('function') ? $child -> getAttribute ('function').'('.$table.'.'.str_replace ('allfields', '*', $child -> nodeName).')' : $table.'.'.str_replace ('allfields', '*', $child -> nodeName)  );
-							$sql .=	(!empty ($alias) ? ' AS '.$alias : '').', ';
-						}else	
-							$sql .= $this -> parseJoin ($child, $table);					
-					}		
-				}
-			}
 			$from = ($table) ? ' FROM '.$table : '';
 			$where_el = $node -> getElementsByTagName('where');
-			$where = ($where_el->item(0)) ? ' WHERE '.$this -> parseWhereChild ($where_el -> item(0)) : ' ';
+			$where = ' ';
+			if($where_el -> length != 0)
+			{
+				if ($this -> validateAction ($where_el -> item(0)))
+				{
+					$where = ' WHERE '.$this -> parseWhereChild($where_el -> item(0));
+				}
+			}
+
 			$group = $node -> hasAttribute ('group') ? ' GROUP BY '.$node -> getAttribute ('group') : ' ';
 			$order = $node -> hasAttribute ('order') ? ' ORDER BY '.$this->value($node -> getAttribute ('order')) : ' ';
 			$limit = $this -> parseLimit ($node);
