@@ -17,6 +17,8 @@
 	define ('RECAPTCHA_PRIVATE_KEY', '');
 
 	define ('TMP_FILE_DIR', '/tmp/');
+	
+	ini_set ('default_charset', 'utf-8');
 
 	if (strpos (strtolower ($_SERVER['SERVER_SOFTWARE']), 'win'))
 		ini_set ('include_path', CONTROLLER_PATH.';'.SITE_PATH.';');
