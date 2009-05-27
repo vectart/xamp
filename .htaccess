@@ -1,0 +1,13 @@
+DirectoryIndex controller/xamp.php
+Options -Indexes
+
+RewriteEngine  On
+RewriteBase    /
+RewriteCond    %{REQUEST_URI} !\.
+RewriteRule    ^(.+[^/])$ http://%{HTTP_HOST}/$1/ [L,R,QSA]
+
+RewriteCond    %{REQUEST_FILENAME}     !-d
+RewriteCond    %{REQUEST_FILENAME}     !-s
+RewriteCond    %{REQUEST_FILENAME}     !-l
+RewriteRule    ^([a-z0-9\.\-\_^\/]+)/   /controller/xamp.php?request=$1 [L,QSA]
+
