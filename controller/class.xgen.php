@@ -38,28 +38,51 @@
 			{
 				$this -> config = $this -> load ($script_xml);
 				$pages = $this -> config -> getElementsByTagName ('page');
+				$pageFounded = false;
 
-				foreach ($pages as $page) {
-				
+				foreach ($pages as $page)
+				{
 					if (strlen ($match = $page -> getAttribute ('match')))
-
-						if (preg_match ('#^'.$match.'$#', $this -> request, $matches)) {
-							if (isset($_SERVER['HTTP_X_REQUESTED_WITH'])) {
-								$page -> setAttribute('ajax', 'true'); 
-							}
-							$this -> parsePage ($page);
+					{
+						if (preg_match ('#^'.$match.'$#', $this -> request, $matches))
+						{
+							$this -> startParse($page);
+							$pageFounded = true;
 							break; 
-						}	
+						}
+					}
+				}
+				if(!$pageFounded && $pages -> length != 0)
+				{
+					$this -> startParse($pages -> item(0));
+					$pageFounded = true;
+				}
+				if(!$pageFounded)
+				{
+					$error = $this -> simpleError('error', '510');
+					$error -> setAttribute('description', 'Config not declared');
+					$this -> dom -> appendChild($error);
 				}
 			}
 			else
 			{
 				header("HTTP/1.0 404 Not Found");
-				$this -> dom -> appendChild($this -> simpleError('error', '404'));
+				$error = $this -> simpleError('error', '404');
+				$error -> setAttribute('description', 'Not found');
+				$this -> dom -> appendChild($error);
 			}
 				
 			$this -> xml = $this -> dom;
 			$this -> xsl = VIEW_PATH.$script_name.'.xsl';	
+		}
+
+		private function startParse($page)
+		{
+			if (isset($_SERVER['HTTP_X_REQUESTED_WITH']))
+			{
+				$page -> setAttribute('ajax', 'true'); 
+			}
+			$this -> parsePage ($page);
 		}
 						
 		public function load ($path)
