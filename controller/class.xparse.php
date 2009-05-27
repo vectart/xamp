@@ -135,7 +135,6 @@ if(!$xml)
 			$this -> join = '';
 			$name = $node -> hasAttribute ('name') ? $node -> getAttribute ('name') : 'select';			
 			$table = $node -> getAttribute ('table');
-			
 			if($node -> childNodes -> length == 0)
 			{
 				$sql .= '*  ';
@@ -419,7 +418,7 @@ if($node -> hasAttribute('cache')) $this->cacheSet($ch, $xml);
 		}	
 		
 		public function mysqlToXML ($node, $result, $breaked = false) {
-			$name = $node -> hasAttribute ('name') ? $node -> getAttribute ('name') : $node -> getAttribute ('table');;
+			$name = $node -> hasAttribute ('name') ? $node -> getAttribute ('name') : $node -> getAttribute ('table');
 			$xml = '<'.$name.'>';
 				if (count ($result)) {
 					foreach ($result as &$res) {
@@ -479,8 +478,7 @@ if($node -> hasAttribute('cache')) $this->cacheSet($ch, $xml);
 			$result = $this -> makeNode ('get');
 				if (!empty ($_GET)) {
 					foreach ($_GET as $key => $get) {
-						if (strlen ($get))
-							$result -> appendChild ($this -> makeNode ($key, $get));
+						$result -> appendChild ($this -> makeNode ($key, $get));
 					}	
 				}
 			return $result;	
