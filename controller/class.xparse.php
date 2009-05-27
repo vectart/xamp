@@ -34,8 +34,7 @@
 			if(DB_USER)
 			{
 				$this -> dbcon = new dbcon (DB_USER, DB_PASS, DB_NAME, DB_HOST, DB_PORT, true);
-				$this -> dbcon -> query ("SET NAMES utf8");
-				$this -> dbcon -> query ("SET collation_connection = 'utf8_general_ci'");
+				$this -> dbcon -> query ("SET NAMES utf8 COLLATE 'utf8_general_ci'");
 				$tables = $this -> dbcon -> query ("show table status") -> fetch_assoc_all();
 				foreach($tables as $table) $this -> tableStatus[$table['Name']] = $table['Update_time'];
 			}
