@@ -99,20 +99,31 @@
 	$xgen -> start();
 	unset($db);
 	
-	if(class_exists('xsltCache'))
+	if(is_file($xgen -> xsl))
 	{
-		$proc = new xsltCache ();
-		$proc -> importStyleSheet ($xgen -> xsl);
+		if(class_exists('xsltCache'))
+		{
+			$proc = new xsltCache ();
+			$proc -> importStyleSheet ($xgen -> xsl);
+		}
+		else
+		{
+			$proc = new XSLTProcessor;
+			$proc -> importStyleSheet ($xgen->load( $xgen -> xsl ));
+		}
 	}
 	else
 	{
-		$proc = new XSLTProcessor;
-		$proc -> importStyleSheet ($xgen->load( $xgen -> xsl ));
+		header ("Content-type: text/xml; charset=utf-8");
+		$_GET['xml'] = true;
 	}
 
-	if (isset ($_GET['xml']) && $_GET['xml'] == true) {
+	if (isset ($_GET['xml']) && $_GET['xml'] == true)
+	{
 		echo $xgen -> xml -> saveXML ();
-	}else{	
+	}
+	else
+	{
 		if (!isset($_SERVER['HTTP_X_REQUESTED_WITH'])) echo DOCTYPE;
 		echo $proc -> transformToXML ($xgen -> xml);
 	}
