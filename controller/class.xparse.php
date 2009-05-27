@@ -136,6 +136,12 @@ if(!$xml)
 			$name = $node -> hasAttribute ('name') ? $node -> getAttribute ('name') : 'select';			
 			$table = $node -> getAttribute ('table');
 			
+			if($node -> childNodes -> length == 0)
+			{
+				$sql .= '*  ';
+			}
+			else
+			{
 				foreach ($node -> childNodes as $child) {
 					if ($this -> isXmlNode ($child)) {
 						if ($child -> nodeName == 'where') continue;
@@ -147,6 +153,7 @@ if(!$xml)
 							$sql .= $this -> parseJoin ($child, $table);					
 					}		
 				}
+			}
 			$from = ($table) ? ' FROM '.$table : '';
 			$where_el = $node -> getElementsByTagName('where');
 			$where = ($where_el->item(0)) ? ' WHERE '.$this -> parseWhereChild ($where_el -> item(0)) : ' ';
@@ -412,7 +419,7 @@ if($node -> hasAttribute('cache')) $this->cacheSet($ch, $xml);
 		}	
 		
 		public function mysqlToXML ($node, $result, $breaked = false) {
-			$name = $node -> hasAttribute ('name') ? $node -> getAttribute ('name') : 'result';
+			$name = $node -> hasAttribute ('name') ? $node -> getAttribute ('name') : $node -> getAttribute ('table');;
 			$xml = '<'.$name.'>';
 				if (count ($result)) {
 					foreach ($result as &$res) {
