@@ -66,16 +66,7 @@
 	
 	header ("Content-type: text/". (isset ($_GET['xml']) && $_GET['xml'] == true ? 'xml' : 'html')."; charset=utf-8");
 
-	if (array_key_exists('login', $_POST))
-	{
-		session_set_cookie_params(array_key_exists('loginForever', $_POST) ? 2592000 : 0, '/');
-		session_start();
-		session_regenerate_id(true);
-	}
-	else
-	{
-		session_start();
-	}
+	session_start();
 		
 	$jevix = new jevix();
 	$jevix->cfgAllowTags(array('a', 'img', 'i', 'b', 'u', 'em', 'strong', 'sup', 'br'));
