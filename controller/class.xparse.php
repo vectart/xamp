@@ -102,7 +102,7 @@
 		
 		private function attr ($node) {
 			$node = $this -> dom -> importNode ($node, true);
-			$node -> value = $this -> value ($node -> value);
+			$node -> nodeValue = htmlspecialchars($this -> value ($node -> nodeValue));
 			return $node;
 		}
     
