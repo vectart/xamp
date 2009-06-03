@@ -5,8 +5,6 @@
 	define ('SITE_URL', 'http://localhost/');
 	define ('REQUEST_URL_PREFIX', '');
 	define ('REQUEST_URL', preg_replace('#(^'.REQUEST_URL_PREFIX.'|\?'.$_SERVER['QUERY_STRING'].'$)#', '', $_SERVER['REQUEST_URI']));
-		// Also you can setup value of REQUEST_URL
-		// define ('REQUEST_URL', $_GET['request']);
 	define ('XML_SOURCE', $_GET['xml']);
 	define ('XSL_CACHE', false);
 	
