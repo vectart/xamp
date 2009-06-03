@@ -446,7 +446,7 @@ if($node -> hasAttribute('cache')) $this->cacheSet($ch, $xml);
 		public function parsePath ($node) {
 			$path = $this -> dom -> createElement('path');
 			$req = $this -> dom -> createAttribute('request');
-			$req -> nodeValue = $_GET['request'];
+			$req -> nodeValue = $this -> request;
 			$path -> appendChild( $req );
 			if (count($this -> path))
 			foreach( $this -> path as $p )

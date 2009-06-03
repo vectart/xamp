@@ -64,10 +64,10 @@
 		return $value;
 	}
 	
-	header ("Content-type: text/". (isset ($_GET['xml']) && $_GET['xml'] == true ? 'xml' : 'html')."; charset=utf-8");
+	header ("Content-type: text/". (XML_SOURCE == true ? 'xml' : 'html')."; charset=utf-8");
 
 	session_start();
-		
+	
 	$jevix = new jevix();
 	$jevix->cfgAllowTags(array('a', 'img', 'i', 'b', 'u', 'em', 'strong', 'sup', 'br'));
 	$jevix->cfgSetTagShort(array('br','img'));
@@ -82,24 +82,25 @@
 	$jevix->cfgSetAutoBrMode(true);
 	$jevix->cfgSetAutoLinkMode(true);
 	$errors = null;
-	
 	if (isset ($_POST)) foreach ($_POST as $key => $value) if(!is_array($value)) $_POST[$key] = $jevix -> parse ($value, $errors);
 	if (isset ($_GET)) foreach ($_GET as $key => $value) $_GET[$key] = $jevix -> parse ($value, $errors);
-	if (isset ($_COOKIE)) foreach ($_COOKIE as $key => $value) $_COOKIE[$key] = $jevix -> parse ($value, $errors);		
+	if (isset ($_COOKIE)) foreach ($_COOKIE as $key => $value) $_COOKIE[$key] = $jevix -> parse ($value, $errors);
+	unset($jevix);
 
-	unset($jevix);	
-
-	$request = (isset ($_GET['request']) && !empty ($_GET['request']) ? $_GET['request'] : '/');
-	$s = split('/', $request);
-	foreach ($s as $p) if (!empty ($p)) $path[] = $p;
-
-	$xgen = new xgen ($request, $path);
+	$xgen = new xgen (REQUEST_URL);
 	$xgen -> start();
 	unset($xgen -> dbcon);
 	
-	if(is_file($xgen -> xsl))
+	$result = '';
+
+	if (XML_SOURCE == true || !is_file($xgen -> xsl))
 	{
-		if(class_exists('xsltCache'))
+		header ("Content-type: text/xml; charset=utf-8");
+		$result = $xgen -> xml -> saveXML ();
+	}
+	else if(is_file($xgen -> xsl))
+	{
+		if(XSL_CACHE)
 		{
 			$proc = new xsltCache ();
 			$proc -> importStyleSheet ($xgen -> xsl);
@@ -109,22 +110,12 @@
 			$proc = new XSLTProcessor;
 			$proc -> importStyleSheet ($xgen->load( $xgen -> xsl ));
 		}
-	}
-	else
-	{
-		header ("Content-type: text/xml; charset=utf-8");
-		$_GET['xml'] = true;
+		$result = $proc -> transformToXML ($xgen -> xml);
+		if (isset($_SERVER['HTTP_X_REQUESTED_WITH'])) $result = preg_replace('#^\s*\<!DOCTYPE[^\>]+\>#', '', $result);
 	}
 
-	if (isset ($_GET['xml']) && $_GET['xml'] == true)
-	{
-		echo $xgen -> xml -> saveXML ();
-	}
-	else
-	{
-		if (!isset($_SERVER['HTTP_X_REQUESTED_WITH'])) echo DOCTYPE;
-		echo $proc -> transformToXML ($xgen -> xml);
-	}
+	echo $result;
+
 	unset($xgen);
 	unset($proc);
 ?>

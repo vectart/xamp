@@ -11,12 +11,14 @@
 			$dir,		
 			$xsl;	
 		
-		public function __construct ($request, $path)
+		public function __construct ($request = '/')
 		{
 			parent::__construct ();
 
+			$s = split('/', $request);
+			foreach ($s as $p) if (!empty ($p)) $this -> path[] = $p;
+
 			$this -> request = $request;
-			$this -> path = $path;
 			
 			$imp = new DOMImplementation;		
 			$dtd = $imp -> createDocumentType('page', '', VIEW_PATH.'entities.dtd');
