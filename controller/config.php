@@ -7,6 +7,7 @@
 	define ('REQUEST_URL', preg_replace('#(^'.REQUEST_URL_PREFIX.'|\?'.$_SERVER['QUERY_STRING'].'$)#', '', $_SERVER['REQUEST_URI']));
 	define ('XML_SOURCE', $_GET['xml']);
 	define ('XSL_CACHE', false);
+	define ('XAMP_REBUILD', true);
 	
 	// MySQL database connection setttings
 	define ('DB_HOST', 'localhost');
@@ -20,6 +21,7 @@
 	define ('VIEW_PATH', SITE_PATH.'view/');
 	define ('MODEL_PATH', SITE_PATH.'model/');
 	define ('CONTROLLER_PATH', SITE_PATH.'controller/');
+	define ('PLUGIN_PATH', CONTROLLER_PATH.'plugins/');
 	define ('TMP_FILE_DIR', '/tmp/');
 	
 	// Recaptcha setup

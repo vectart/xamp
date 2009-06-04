@@ -1,58 +1,46 @@
 <?php
-	include_once 'class.jevix.php';
-	cleanup();
-	
-	include_once 'config.php';
-	
-	include_once 'class.dbcon.php';
-	include_once 'class.mail.php';
-	include_once 'class.xfiles.php';
-	include_once 'class.recaptcha.php';
-	
-	include_once 'class.xparse.php';
-	include_once 'class.xgen.php';
-	
-	header ("Content-type: text/". (XML_SOURCE == true ? 'xml' : 'html')."; charset=utf-8");
+	prepare();
+	$xamp = new xamp(REQUEST_URL);
 
-	session_start();
-	
-	$xgen = new xgen (REQUEST_URL);
-	$xgen -> start();
-	unset($xgen -> dbcon);
-	
-	$result = '';
-	$is_xsl = is_file($xgen -> xsl);
-	if (XML_SOURCE == true || !$is_xsl)
+
+
+
+	function prepare()
 	{
-		header ("Content-type: text/xml; charset=utf-8");
-		$result = $xgen -> xml -> saveXML ();
+		include_once 'config.php';
+		
+	 	cleanup();
+		header ("Content-type: text/". (XML_SOURCE == true ? 'xml' : 'html')."; charset=utf-8");
+		session_start();
+
+		include_once 'class.dbcon.php';
+		include_once 'class.mail.php';
+		include_once 'class.xfiles.php';
+		include_once 'class.recaptcha.php';
+  		if(!XAMP_REBUILD) include_once 'class.xamp.php';
+	  	if(!class_exists('xamp') || XAMP_REBUILD)
+	  	{
+			if ($handle = opendir(PLUGIN_PATH))
+			{
+				while (false !== ($file = readdir($handle)))
+				{ 
+					if ($file != "." && $file != "..")
+					{ 
+						$result .= " \n \n \n// $file \n ".preg_replace('#(^\s*\<\?(php)?|\?\>\s*$|\t)#', '', file_get_contents(PLUGIN_PATH."/$file"));
+					} 
+				}
+				closedir($handle); 
+			}
+	  		$result = "<?php \n class xamp \n { \n $result";
+			$result = "$result \n } \n ?>";
+			file_put_contents('class.xamp.php', $result);
+			require_once 'class.xamp.php';
+	  	}
 	}
-	else if($is_xsl)
-	{
-		if(XSL_CACHE)
-		{
-			$proc = new xsltCache ();
-			$proc -> importStyleSheet ($xgen -> xsl);
-		}
-		else
-		{
-			$proc = new XSLTProcessor;
-			$proc -> importStyleSheet ($xgen->load( $xgen -> xsl ));
-		}
-		$result = $proc -> transformToXML ($xgen -> xml);
-		if (isset($_SERVER['HTTP_X_REQUESTED_WITH'])) $result = preg_replace('#^\s*\<!DOCTYPE[^\>]+\>#', '', $result);
-	}
-	echo $result;
-
-	unset($xgen);
-	unset($proc);
-
-
-
-
 
 	function cleanup()
 	{
+		include_once 'class.jevix.php';
 		$jevix = new jevix();
 		$jevix->cfgAllowTags(array('a', 'img', 'i', 'b', 'u', 'em', 'strong', 'sup', 'br'));
 		$jevix->cfgSetTagShort(array('br','img'));
