@@ -6,7 +6,6 @@
 		<get />
 		<post />
 		<path />
-		<select table="test" action="post:test" />
 	</page>
 
 </root>
