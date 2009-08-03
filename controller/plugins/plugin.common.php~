@@ -281,9 +281,6 @@
 		if($type === 'path' && isset($this->path[$value-1]))
 			return $this->path[$value-1];
 
-		if($type === 'path' && $value == 0)
-			return REQUEST_SOURCE;
-
 		return null;
 	}
 	private function insertXML($matches)

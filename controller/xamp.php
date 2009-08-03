@@ -1,46 +1,58 @@
 <?php
+	$speedAnalyze = getmicrotime();
+	$speedAnalyzeLast = 0;
 	prepare();
-	$xamp = new xamp(REQUEST_URL);
+	$xamp = new xamp(REQUEST_URL, $speedAnalyze);
 
 
 
 
 	function prepare()
 	{
-		include_once 'config.php';
+		require_once 'config.php';
+		file_put_contents(CONTROLLER_PATH.'xamp.log', "------------------------------------\n\n", FILE_APPEND);
 		
-	 	cleanup();
 		header ("Content-type: text/". (XML_SOURCE == true ? 'xml' : 'html')."; charset=utf-8");
-		session_start();
 
-		include_once 'class.dbcon.php';
-		include_once 'class.mail.php';
-		include_once 'class.xfiles.php';
-		include_once 'class.recaptcha.php';
-  		if(!XAMP_REBUILD) include_once 'class.xamp.php';
+		speedAnalyzer('Подключаем ядро');		
+  		if(!XAMP_REBUILD) require_once 'kernel.php';
+  		
 	  	if(!class_exists('xamp') || XAMP_REBUILD)
 	  	{
-			if ($handle = opendir(PLUGIN_PATH))
-			{
-				while (false !== ($file = readdir($handle)))
-				{ 
-					if ($file != "." && $file != "..")
-					{ 
-						$result .= " \n \n \n// $file \n ".preg_replace('#(^\s*\<\?(php)?|\?\>\s*$|\t)#', '', file_get_contents(PLUGIN_PATH."/$file"));
-					} 
-				}
-				closedir($handle); 
-			}
-	  		$result = "<?php \n class xamp \n { \n $result";
-			$result = "$result \n } \n ?>";
-			file_put_contents('class.xamp.php', $result);
-			require_once 'class.xamp.php';
+			speedAnalyzer('Пересобираем XAMP');
+			$result .= rebuild(PLUGIN_PATH);
+	  		$result = "<?php \n class xamp \n { \n $result  \n } \n ?>";
+			$result .= rebuild(CLASS_PATH, false);
+			file_put_contents('kernel.php', $result);
+			require_once 'kernel.php';
 	  	}
+
+		speedAnalyzer('Чистим переменные');
+	 	cleanup();
+		session_start();
+	}
+	
+	function rebuild($path, $removeTags = true)
+	{
+		$result = '';
+		if ($handle = opendir($path))
+		{
+			while (false !== ($file = readdir($handle)))
+			{ 
+				if (preg_match('/\.php$/i', $file))
+				{ 
+					$result .= " \n \n \n// $file \n ".preg_replace('#(^\s*\<\?(php)?|\?\>\s*$|\t)#', '', file_get_contents($path."/$file"));
+				} 
+			}
+			closedir($handle); 
+		}
+		if(!$removeTags) $result = "<?php $result ?>";
+		return $result;
 	}
 
 	function cleanup()
 	{
-		include_once 'class.jevix.php';
+		//include_once 'class.jevix.php';
 		$jevix = new jevix();
 		$jevix->cfgAllowTags(array('a', 'img', 'i', 'b', 'u', 'em', 'strong', 'sup', 'br'));
 		$jevix->cfgSetTagShort(array('br','img'));
@@ -60,60 +72,25 @@
 		if (isset ($_COOKIE)) foreach ($_COOKIE as $key => $value) $_COOKIE[$key] = $jevix -> parse ($value, $errors);
 		unset($jevix);
 	}
-	
-	function insertData($matches)
+
+
+	function speedAnalyzer($name = '', $start = false)
 	{
-		global $xgen;
-		
-		$type = $matches[1];
-		$value = $matches[2];
-		
-		if($type === 'post' && isset($_POST[$value]))
-			return (is_array($_POST[$value])) ? join(',', $_POST[$value]) : $_POST[$value];
-
-		if($type === 'get' && isset($_GET[$value]))
-			return (is_array($_GET[$value])) ? join(',', $_GET[$value]) : $_GET[$value];
-
-		if($type === 'session' && isset($_SESSION[$value]))
-			return $_SESSION[$value];
-
-		if($type === 'server' && isset($_SERVER[$value]))
-			return $_SERVER[$value];
-
-		if($type === 'cookie' && isset($_COOKIE[$value]))
-			return $_COOKIE[$value];
-
-		if($type === 'globals' && array_key_exists($value, $xgen->globals))
-			return $xgen->globals[$value];
-
-		if($type === 'path' && isset($xgen->path[$value-1]))
-			return $xgen->path[$value-1];
-
-		return null;
+		global $speedAnalyze, $speedAnalyzeLast;
+		$current = getmicrotime();
+		if(!$start) $start = $speedAnalyze;
+		$diff = round(($current - $start)*1000);
+		$result = array('<-'.($diff - $speedAnalyzeLast), $name, $current, $current - $start, $diff);
+		$speedAnalyzeLast = $diff;
+		file_put_contents(CONTROLLER_PATH.'xamp.log', join("\t", $result)."\n", FILE_APPEND);
+		return $result;
 	}
+	function getmicrotime() 
+	{ 
+	    list($usec, $sec) = explode(" ", microtime()); 
+	    return ((float)$usec + (float)$sec); 
+	} 
 
-	function insertXML($matches)
-	{
-		global $xgen;
-
-		$result = $xgen -> xpath -> query ($matches[1]);
-		if ($result -> length == 0)
-		{
-			$value = null;
-		}
-		elseif ($result -> length == 1)
-		{
-			$value = $result -> item(0) -> nodeValue;
-		}
-		else
-		{
-			$tmp = array();
-			foreach ($result as $n) $tmp[] = "'".$n -> firstChild -> nodeValue."'";
-			$value = join(',', $tmp);
-		}
-
-		return $value;
-	}
 
 ?>
 

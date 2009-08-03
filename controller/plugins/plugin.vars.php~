@@ -62,9 +62,6 @@
 		else
 		{
 			$value = $this -> extractValue($type, $name);
-			$var = $this -> dom -> createElement ('var', $value);
-			$var -> setAttribute ('name', $name);
-			$var -> setAttribute ('type', $type);
 		}
 
 		if($node -> hasChildNodes())
@@ -101,10 +98,15 @@
 	}
 	private function extractValue($type, $name)
 	{
-		if($type === 'post') return $_POST[$name];
-		if($type === 'get') return $_GET[$name];
-		if($type === 'session') return $_SESSION[$name];
-		if($type === 'cookie') return $_COOKIE[$name];
-		if($type === 'globals') return $this->globals[$name];
+		$value = null;
+		if($type === 'post') $value = $_POST[$name];
+		if($type === 'get') $value = $_GET[$name];
+		if($type === 'session') $value = $_SESSION[$name];
+		if($type === 'cookie') $value = $_COOKIE[$name];
+		if($type === 'globals') $value = $this->globals[$name];
+		$var = $this -> dom -> createElement ('var', $value);
+		$var -> setAttribute ('name', $name);
+		$var -> setAttribute ('type', $type);
+		return $var;
 	}
 ?>

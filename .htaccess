@@ -1,7 +1,6 @@
 DirectoryIndex controller/xamp.php
-Options -Indexes
 
-RewriteEngine  On
+RewriteEngine  Off
 RewriteCond    %{REQUEST_FILENAME}     !-d
 RewriteCond    %{REQUEST_FILENAME}     !-s
 RewriteCond    %{REQUEST_FILENAME}     !-l

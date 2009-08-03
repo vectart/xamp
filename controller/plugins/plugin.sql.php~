@@ -33,7 +33,7 @@
 			}
 			if($countFields == 0)
 			{
-				$sql .= $table.'.*  ';
+				$sql .= '*  ';
 			}
 			$from = ($table) ? ' FROM '.$table : '';
 			$where_el = $node -> getElementsByTagName('where');

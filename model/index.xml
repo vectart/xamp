@@ -3,8 +3,180 @@
 <root xmlns:xi="http://www.w3.org/2001/XInclude">
 
 	<page match="/">
+		<speedAnalyzer name="Старт" />
+		<documentation static="true">
+			<plugin>
+				<name>Common</name>
+				<file>plugin.common.php</file>
+				<description>Базовые функции</description>
+				<tag>
+					<name>page</name>
+					<title>Тег, содержащий модель для конкретного URL</title>
+					<description>
+						Один из первых шагов работы XAMP &mdash; это найти нужную модель.<br />
+						Для этого в XML-файле данного раздела, должен быть хотя бы один <tag>page</tag>.<br />
+						Если раздел содержит множество моделей, то следует использовать <attribute>match</attribute>, 
+						чтобы XAMP верно выбрал нужную по URL.
+					</description>
+					<feature>
+						Если запрос был произведен Ajax-запросом, то в тег будет добавлен <attribute>ajax</attribute>, 
+						а описание типа документа (doctype) &mdash; вырезано после XSL-преобразования.<br />
+						Ajax-запрос определяется по заголовку в запросе HTTP_X_REQUESTED_WITH.
+					</feature>
+					<example>
+						<code>
+							<root>
+								<page>
+									<get />
+								</page>
+							</root>
+						</code>
+						<description>
+							Типичный образец файла XML-модели в XAMP.
+						</description>
+					</example>
+					<attribute>
+						<name>match</name>
+						<description>Указывает для какого URL предназначена эта модель. Значением является регулярное выражение.</description>
+						<example>
+							<code>
+								<page match="/" />
+							</code>
+							<description>
+								<tag>page</tag> сработает для главной страницы.
+							</description>
+							<code>
+								<page match="/company/" />
+								<page match="/catalog/[a-z]+/" />
+								<page match="/news/([0-9]+/)?" />
+							</code>
+						</example>
+					</attribute>
+				</tag>
+				<tag>
+					<name>*</name>
+					<title>Любой тег, на который не нашлось обработчика</title>
+					<description>
+						XAMP рекурсивно обходит каждый тег и если для него нет функции-обработчика, то он создает его клон 
+						и обрабатывает аттрибуты.
+					</description>
+					<attribute>
+						<name>static</name>
+						<description>Указывает на то, что ветку следует скопировать как есть и не обрабатывать дочерние теги.</description>
+					</attribute>
+					<attribute>
+						<name>*</name>
+						<description>
+							Все аттрибуты тегов без функции-обработчика и без <attribute>static</attribute> проходят обработку парсером значений, 
+							который заменяет переменные XAMP на их значения.
+						</description>
+					</attribute>
+				</tag>
+				<attribute>
+					<name>action</name>
+					<description>Выполняет проверку условия перед тем как обработать тег.</description>
+				</attribute>
+			</plugin>
+			<plugin>
+				<name>Vars</name>
+				<file>plugin.vars.php</file>
+				<description>Работа с переменными</description>
+				<tag>
+					<name>get</name>
+					<title>Вывод GET-переменных</title>
+					<description>
+						Выводит все переменные, которые пришли в строке запроса (HTTP GET).
+					</description>
+				</tag>
+				<tag>
+					<name>post</name>
+					<title>Вывод POST-переменных</title>
+					<description>
+						Выводит все переменные, которые пришли в теле запроса (HTTP POST).
+					</description>
+				</tag>
+				<tag>
+					<name>path</name>
+					<title>Вывод текущего адреса</title>
+					<description>
+						Выводит адрес, который является текущим для XAMP.<br />
+						Дочерними ветками являются <tag>dir</tag> &mdash; части запроса, разбитые по слешу.
+					</description>
+				</tag>
+				<tag>
+					<name>var</name>
+					<title>Задание значения переменной</title>
+					<description>
+						Выводит адрес, который является текущим для XAMP.<br />
+						Дочерними ветками являются <tag>dir</tag> &mdash; части запроса, разбитые по слешу.
+					</description>
+					<attribute>
+						<name>name</name>
+						<description>
+							Содержит имя переменной в XAMP-формате.
+						</description>
+						<feature>
+							Таким образом возможно установить значения для переменных классов <var>post</var>, <var>get</var>, <var>session</var>, <var>cookie</var>, <var>globals</var>.
+						</feature>
+					</attribute>
+					<attribute>
+						<name>value</name>
+						<description>
+							Содержит новое значение для этой переменной.
+						</description>
+					</attribute>
+					<attribute>
+						<name>action</name>
+					</attribute>
+				</tag>
+			</plugin>
+			<plugin>
+				<name>SQL</name>
+				<file>plugin.sql.php</file>
+				<description>SQL-запросы</description>
+			</plugin>
+			<plugin>
+				<name>Mail</name>
+				<file>plugin.mail.php</file>
+				<description>Отправка электронных писем</description>
+			</plugin>
+			<plugin>
+				<name>File</name>
+				<file>plugin.file.php</file>
+				<description>Работа с файлами</description>
+			</plugin>
+			<plugin>
+				<name>IMagick</name>
+				<file>plugin.imagick.php</file>
+				<description>Обработка изображений</description>
+			</plugin>
+			<plugin>
+				<name>Recaptcha</name>
+				<file>plugin.recaptcha.php</file>
+				<description>Анти-спам проверка</description>
+			</plugin>
+			<plugin>
+				<name>Exec</name>
+				<file>plugin.exec.php</file>
+				<description>Выполнение программ</description>
+			</plugin>
+			<plugin>
+				<name>Redirect</name>
+				<file>plugin.redirect.php</file>
+				<description>Условная переадресация</description>
+			</plugin>
+			<plugin>
+				<name>XSLT</name>
+				<file>plugin.xsl.php</file>
+				<description>Внутренняя XSL-трансформация</description>
+			</plugin>
+		</documentation>
+		
+		<speedAnalyzer name="Обработка GET" />
 		<get />
+		<speedAnalyzer name="Обработка POST" />
 		<post />
+		<speedAnalyzer name="Обработка PATH" />
 		<path />
 	</page>
 

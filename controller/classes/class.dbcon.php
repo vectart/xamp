@@ -56,7 +56,7 @@ class dbcon {
 		try
 		{
 			$connect = 'mysql:host='.$this->dbhost.';port='.$this->dbport.';dbname='.$this->dbname;
-			$this->pdo = new PDO($connect, $this->dbuser, $this->dbpass, array(PDO::ATTR_PERSISTENT => $persistent));
+			$this->pdo = new PDO($connect, $this->dbuser, $this->dbpass, array(PDO::ATTR_PERSISTENT => $persistent, PDO::MYSQL_ATTR_INIT_COMMAND => "SET NAMES utf8 COLLATE 'utf8_general_ci'"));
 		}
 		catch (PDOException $e)
 		{

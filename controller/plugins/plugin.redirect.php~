@@ -1,6 +1,7 @@
 <?php
 	private function parseRedirect ($node)
 	{
+		die(1);
 		if ($this -> validateAction ($node))
 		{
 			header('Location: '.$this -> value($node -> getAttribute('url')));
