@@ -381,7 +381,7 @@
 		{
 			return $this->memcon->get($name);
 		}
-		else
+		else if(APC_CACHE)
 		{
 			return apc_fetch($name);
 		}
@@ -393,7 +393,7 @@
 		{
 			$this->memcon->set($name, $content, true, TTL_SECONDS);
 		}
-		else
+		else if(APC_CACHE)
 		{
 			apc_store($name, $content, TTL_SECONDS);
 		}

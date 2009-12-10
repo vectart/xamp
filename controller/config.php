@@ -33,6 +33,6 @@
 	define('MEM_CACHE', false);
 	define('TTL_SECONDS', 15);
 	define('XML_CACHE', false);
-	define('XSL_CACHE', true);
+	define('XSL_CACHE', false);
 
 ?>
