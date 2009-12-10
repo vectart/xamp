@@ -1,0 +1,24 @@
+-- Lighttpd Server configuration ---------------------------------------------
+
+Place this code to /etc/lighttpd/lighttpd.conf:
+
+server.modules	+=( "mod_rewrite", "mod_redirect" )
+url.redirect	= ( "^([^\.^\?]+?[^\/])?(\?.*)?$" => "$1/$2" )
+url.rewrite	= ( "^/([^\.^\?]+/)?(\?.*)?$" => "/controller/xamp.php$2" )
+
+
+
+-- Apache Server configuration -----------------------------------------------
+
+Place this code to .htaccess in root host directory 
+or (in some cases) virtual host configuration file:
+
+DirectoryIndex controller/xamp.php
+
+RewriteEngine  On
+RewriteCond    %{REQUEST_FILENAME}     !-d
+RewriteCond    %{REQUEST_FILENAME}     !-s
+RewriteCond    %{REQUEST_FILENAME}     !-l
+
+RewriteRule    ^/([^\.^\?]+\/)?$   controller/xamp.php [L,QSA]
+

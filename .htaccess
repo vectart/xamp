@@ -1,9 +1,0 @@
-DirectoryIndex controller/xamp.php
-
-RewriteEngine  Off
-RewriteCond    %{REQUEST_FILENAME}     !-d
-RewriteCond    %{REQUEST_FILENAME}     !-s
-RewriteCond    %{REQUEST_FILENAME}     !-l
-
-RewriteRule    ^.+   controller/xamp.php [L,QSA]
-
