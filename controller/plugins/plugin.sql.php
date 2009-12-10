@@ -5,60 +5,69 @@
 		$ch = '';
 		$sql = '';
 		$xml = false;
+		$cached = false;
 		$result = array();
 		if($node -> hasAttribute('cache'))
 		{
 			$ch = $this -> value($node -> getAttribute('cache')) . $this -> checkTables($node);
 			$xml = $this->cacheGet($ch);
+			$cached = true;
 		}
 
 		if(!$xml)
 		{
-			$sql = $node -> hasAttribute ('sqlcache') ? 'SELECT SQL_CACHE ' : 'SELECT ';
-			$this -> join = '';
-			$name = $node -> hasAttribute ('name') ? $node -> getAttribute ('name') : 'select';			
-			$table = $node -> getAttribute ('table');
-			$countFields = 0;
-			foreach ($node -> childNodes as $child) {
-				if ($this -> isXmlNode ($child)) {
-					if ($child -> nodeName == 'where') continue;
-					if (!$child -> hasChildNodes ()) {
-						$alias = $child -> hasAttribute ('as') ? $child -> getAttribute ('as') : '';
-						$sql .= ($child -> hasAttribute ('value')) ? $child -> getAttribute ('value') : (  $child -> hasAttribute ('function') ? $child -> getAttribute ('function').'('.$table.'.'.str_replace ('allfields', '*', $child -> nodeName).')' : $table.'.'.str_replace ('allfields', '*', $child -> nodeName)  );
-						$sql .=	(!empty ($alias) ? ' AS '.$alias : '').', ';
-						$countFields++;
-					}else	
-						$sql .= $this -> parseJoin ($child, $table);					
-				}		
-			}
-			if($countFields == 0)
+			$cached = false;
+			if($node -> hasAttribute ('naked'))
 			{
-				$sql .= $table.'.*  ';
+				$sql = $this -> value($node -> nodeValue);
 			}
-			$from = ($table) ? ' FROM '.$table : '';
-			$where_el = $node -> getElementsByTagName('where');
-			$where = ' ';
-			if($where_el -> length != 0)
+			else
 			{
-				if ($this -> validateAction ($where_el -> item(0)))
-				{
-					$where = ' WHERE '.$this -> parseWhereChild($where_el -> item(0));
+				$sql = $node -> hasAttribute ('sqlcache') ? 'SELECT SQL_CACHE ' : 'SELECT ';
+				$this -> join = '';
+				$name = $node -> hasAttribute ('name') ? $node -> getAttribute ('name') : 'select';			
+				$table = $node -> getAttribute ('table');
+				$countFields = 0;
+				foreach ($node -> childNodes as $child) {
+					if ($this -> isXmlNode ($child)) {
+						if ($child -> nodeName == 'where') continue;
+						if (!$child -> hasChildNodes ()) {
+							$alias = $child -> hasAttribute ('as') ? $child -> getAttribute ('as') : '';
+							$sql .= ($child -> hasAttribute ('value')) ? $child -> getAttribute ('value') : (  $child -> hasAttribute ('function') ? $child -> getAttribute ('function').'('.$table.'.'.str_replace ('allfields', '*', $child -> nodeName).')' : $table.'.'.str_replace ('allfields', '*', $child -> nodeName)  );
+							$sql .=	(!empty ($alias) ? ' AS '.$alias : '').', ';
+							$countFields++;
+						}else	
+							$sql .= $this -> parseJoin ($child, $table);					
+					}		
 				}
-			}
+				if($countFields == 0)
+				{
+					$sql .= $table.'.*  ';
+				}
+				$from = ($table) ? ' FROM '.$table : '';
+				$where_el = $node -> getElementsByTagName('where');
+				$where = ' ';
+				if($where_el -> length != 0)
+				{
+					if ($this -> validateAction ($where_el -> item(0)))
+					{
+						$where = ' WHERE '.$this -> parseWhereChild($where_el -> item(0));
+					}
+				}
 
-			$group = $node -> hasAttribute ('group') ? ' GROUP BY '.$node -> getAttribute ('group') : ' ';
-			$order = $node -> hasAttribute ('order') ? ' ORDER BY '.$this->value($node -> getAttribute ('order')) : ' ';
-			$limit = $this -> parseLimit ($node);
-			$sql = substr ($sql, 0 , strlen ($sql)-2).$from.' '.$this -> join.$where.$group.$order.$limit;
-			$has_error = strstr ($sql, '#xamp#') ? true : false;									
-				if ($has_error)  return $this -> simpleError ($name, $sql);
-					$dbcon = $this -> dbcon;
-					$result = $dbcon -> query ($sql) -> fetch_assoc_all ();
-					$xml = $this -> mysqlToXML ($node, $result);
+				$group = $node -> hasAttribute ('group') ? ' GROUP BY '.$node -> getAttribute ('group') : ' ';
+				$order = $node -> hasAttribute ('order') ? ' ORDER BY '.$this->value($node -> getAttribute ('order')) : ' ';
+				$limit = $this -> parseLimit ($node);
+				$sql = substr ($sql, 0 , strlen ($sql)-2).$from.' '.$this -> join.$where.$group.$order.$limit;
+				$has_error = strstr ($sql, '#xamp#') ? true : false;
+			}
+			if ($has_error)  return $this -> simpleError ($name, $sql);
+			$result = $this -> dbcon -> query ($sql) -> fetch_assoc_all();
+			$xml = $this -> mysqlToXML ($node, $result);
 			if($node -> hasAttribute('cache')) $this->cacheSet($ch, $xml);
 		}
 		$resultNode = $this -> dom -> createDocumentFragment();
-		@$resultNode -> appendXML($xml);
+		$resultNode -> appendXML($xml);
 
 		if($result && (!$resultNode -> firstChild || $resultNode -> firstChild -> childNodes -> length != count($result)))
 		{
@@ -66,6 +75,7 @@
 			$resultNode = $this -> dom -> createDocumentFragment();
 			$resultNode -> appendXML($xml);
 		}
+		if($cached) $resultNode -> firstChild -> setAttribute('cached', 'true');
 		return $resultNode;
 	}
 
@@ -73,9 +83,8 @@
 	private function checkTables($node)
 	{
 		$tables = '';
-		$xpath = new DOMXpath ($this -> config);
+		$xpath = new DOMXpath ($this -> dom);
 		$result = $xpath -> evaluate("descendant-or-self::*/@table", $node);
-		
 		foreach($result as $t)
 		{
 			$tables .= "_".$t->nodeValue.preg_replace('/([^0-9]|2009)/i', '', $this->tableStatus[$t->nodeValue]);
@@ -148,10 +157,10 @@
 	private function parseCond ($child, $table) {
 		$result = false;
 		$compare = $this -> checkCompare($child, $table);
+		$function = $this -> checkFunction($child, $val);
 		foreach ($child -> attributes as $attr)	if($this -> isXmlNode ($child)) 
 		{
-			$val = $this -> attr ($attr);
-			$function = $this -> checkFunction($child, $val);
+			$val = $this -> attr ($attr, $child->hasAttribute('strip'));
 			if(array_key_exists($attr -> nodeName, $this -> checkAtrribs))
 			{
 				if ($this -> parseParam ($child, $val))
@@ -172,11 +181,12 @@
 		{
 			if ($child -> hasAttribute('function'))
 			{
-				$result = $compare.'='.$child -> getAttribute ('function').'()';
+				$result = $compare.'='.$function;
 			}
 			if ($child -> childNodes -> length != 0)
 			{
-				$result = $compare.'=\''.addslashes($this->value($this -> config -> saveXML( $child ))).'\'';
+				$val = $this->value($this -> config -> saveXML( $child ));
+				$result = $compare.'=\''.addslashes($val).'\'';
 			}
 		}
 		return $result;	
@@ -187,7 +197,7 @@
 		$table = $node->hasAttribute('table') ? $node->getAttribute('table') : $table;
 		if($node -> hasAttribute ('compare'))
 		{
-			$str = $node -> getAttribute('compare');
+			$str = $this->value($node -> getAttribute('compare'));
 			if($this -> closedBrackets($str))
 			{
 				return $str;
@@ -206,7 +216,7 @@
 	{
 		if($node -> hasAttribute ('function'))
 		{
-			$str = $node -> getAttribute('function');
+			$str = $this->value($node -> getAttribute('function'));
 			if($this -> closedBrackets($str))
 			{
 				return $str;
@@ -252,7 +262,7 @@
 		$has_error = strstr ($sql, '#xamp#') ? true : false;
 		$dbcon = $this -> dbcon;
 			if (!$has_error) {
-				$dbcon -> query ($sql);
+				$dbcon -> query ($sql, true);
 				$result = $this -> dom -> createElement ($name, $dbcon -> insert_id);
 			}else	$result = $this -> simpleError ($name, $sql);
 			
@@ -311,6 +321,7 @@
 						foreach ($res as $tagName => &$value)
 						{
 							$value = preg_replace('/&(?!((#[0-9]+|[a-z]+);))/mi', '&amp;', $value);
+							$tagName = preg_replace('/([^\w0-9\_\-])/mi', '', $tagName);
 							$xml .= '<'.$tagName.'>'.(($breaked) ? '<![CDATA['.$value.']]>' : $value).'</'.$tagName.'>';
 						}
 					$xml .= '</row>';

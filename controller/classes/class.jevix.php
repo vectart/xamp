@@ -118,7 +118,7 @@ class Jevix{
         protected $isAutoLinkMode = true;
         protected $br = "<br/>";
 
-        protected $noTypoMode = false;
+        protected $noTypoMode = true;
 
         public    $outBuffer = '';
         public    $errors;
@@ -353,7 +353,7 @@ class Jevix{
                 $this->state = self::STATE_TEXT;
                 $this->states = array();
                 $this->quotesOpened = 0;
-                $this->noTypoMode = false;
+                $this->noTypoMode = true;
 
                 // Авто растановка BR?
                 if($this->isAutoBrMode) {

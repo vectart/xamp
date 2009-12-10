@@ -117,18 +117,16 @@ class dbcon {
 			case 'DELETE' :
 				$num_rows = true;
 			break;	
-		}
+		}
 		$query = trim($query);
 
-			if ($this->qres = $this->pdo->query($query)) {
-				if ($last !== false) {
-					$this->insert_id = $this->pdo->lastInsertId();
-
-				}
-				if ($num_rows === true) {
-					$this->affected_rows = $this->qres->rowCount();
-				}
-			} else {
+			if ($this->qres = $this->pdo->query($query))
+			{
+				if ($last !== false) $this->insert_id = $this->pdo->lastInsertId();
+				if ($num_rows === true) $this->affected_rows = $this->qres->rowCount();
+			}
+			else
+			{
 				$this->error($this->pdo->errorInfo());
 				return false;
 			}
@@ -219,7 +217,7 @@ class dbcon {
 	function __destruct() {
 		$this->free_all_results();
 		$returner = false;
-		$returner = @mysql_close($this->dbres);
+		unset($this->dbres);
 	}
 }
 
@@ -339,6 +337,7 @@ class dbconQuery {
  */
 	function __destruct() {
 		//$this->free_result();
+		dbcon::$instance = false;
 	}
 }
 ?>

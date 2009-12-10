@@ -4,12 +4,13 @@
 		$config,
 		$is_ajax,
 		$path,
-		$dir,		
+		$dir,
 		$xsl,
 		$xml,
 		$page,
 		$tableStatus = array(),
 		$dbcon,
+		$memcon,
 		$cache,
 		$speedAnalyze,
 		$globals = array(),
@@ -34,18 +35,20 @@
 		$table, 
 		$logger,
 		$logger_start,
+		$doctype = true,
+		$mime = 'text/html',
+		$convert = false,
+		$charset = 'utf-8',
+		$stop = false,
 		$registered = '(get|post|session|cookie|server|path|globals|server)';
 
 	public function __construct ($request = '/', $speedAnalyze)
 	{
 		speedAnalyzer('Начинаем работу');
 		$this -> speedAnalyze = $speedAnalyze;
-		speedAnalyzer('Подключаемся к базе');
-		if(DB_USER)
+		if(MEM_CACHE)
 		{
-			$this -> dbcon = new dbcon (DB_USER, DB_PASS, DB_NAME, DB_HOST, DB_PORT, true);
-			$tables = $this -> dbcon -> query ("show table status") -> fetch_assoc_all();
-			foreach($tables as $table) $this -> tableStatus[$table['Name']] = $table['Update_time'];
+			$this -> memcon = memcache_connect('127.0.0.1', 11211);
 		}
 		
 		speedAnalyzer('Считаем $request');
@@ -66,8 +69,6 @@
 
 		$this -> xpath = new DOMXpath ($this -> dom);
 		$this -> start();
-		unset($this -> dbcon);
-		
 		$this -> finish();
 	}
 	
@@ -116,7 +117,6 @@
 			$error -> setAttribute('description', 'Not found');
 			$this -> dom -> appendChild($error);
 		}
-			
 		$this -> xml = $this -> dom;
 		$this -> xsl = VIEW_PATH.$script_name.'.xsl';	
 	}
@@ -127,7 +127,7 @@
 		$is_xsl = is_file($this -> xsl);
 		if (XML_SOURCE == true || !$is_xsl)
 		{
-			header ("Content-type: text/xml; charset=utf-8");
+			header ('Content-type: text/xml; charset='.$this->charset);
 			$result = $this -> xml -> saveXML ();
 		}
 		else if($is_xsl)
@@ -135,8 +135,8 @@
 			speedAnalyzer('XSLT-трасформация');
 			if(XSL_CACHE)
 			{
-				$proc = new xsltCache ();
-				$proc -> importStyleSheet ($xgen -> xsl);
+				$proc = new xsltCache;
+				$proc -> importStyleSheet ($this -> xsl);
 			}
 			else
 			{
@@ -144,12 +144,20 @@
 				$proc -> importStyleSheet ($this->load( $this -> xsl ));
 			}
 			$result = $proc -> transformToXML ($this -> xml);
-			if (isset($_SERVER['HTTP_X_REQUESTED_WITH'])) $result = preg_replace('#^\s*\<!DOCTYPE[^\>]+\>#', '', $result);
+			if(!$this->doctype) $result = preg_replace('#^\s*\<!DOCTYPE[^\>]+\>\n?#', '', $result);
+			if($this->convert)
+			{
+				$result = iconv($this->charset, $this->convert, $result);
+				$this->charset = $this->convert;
+			}
+			header('Content-type: '.$this->mime.'; charset='.$this->charset);
 		}
 		echo $result;
 
 		unset($xgen);
 		unset($proc);
+		if(DB_USER) unset($this -> dbcon);
+		if(MEM_CACHE) memcache_close($this -> memcon);
 		speedAnalyzer('Финиш');
 	}
 
@@ -159,6 +167,23 @@
 		if (isset($_SERVER['HTTP_X_REQUESTED_WITH']))
 		{
 			$page -> setAttribute('ajax', 'true'); 
+			$this -> doctype = false;
+		}
+		if($page -> hasAttribute('mime'))
+		{
+			$this -> mime = $page -> getAttribute('mime');
+			$this -> doctype = false;
+		}
+		if($page -> hasAttribute('charset'))
+		{
+			$this -> convert = $page -> getAttribute('charset');
+		}
+		speedAnalyzer('Подключаемся к базе');
+		if(DB_USER)
+		{
+			$this -> dbcon = new dbcon (DB_USER, DB_PASS, DB_NAME, DB_HOST, DB_PORT, false);
+			$tables = $this -> dbcon -> query ("show table status") -> fetch_assoc_all();
+			foreach($tables as $table) $this -> tableStatus[$table['Name']] = $table['Update_time'];
 		}
 		$this -> parse($page);
 	}
@@ -169,9 +194,18 @@
 		$dom -> resolveExternals = true;
 		$dom -> substituteEntities = true;
 		$dom -> preserveWhiteSpace = false;
-		$dom -> load ($path, LIBXML_NOBLANKS|LIBXML_COMPACT|LIBXML_DTDLOAD);			
-		$dom -> xinclude ();									
+		$xml = false;
+		if(XML_CACHE && $xml = $this->cacheGet('xml_'.md5($path)))
+		{
+			$dom -> loadXML($xml);
+		}
+		else
+		{
+			$dom -> load ($path, LIBXML_NOBLANKS|LIBXML_COMPACT|LIBXML_DTDLOAD);
+		}
+		$dom -> xinclude ();
 		$dom -> normalizeDocument ();
+		if(!$xml) $this->cacheSet('xml_'.md5($path), $dom -> saveXML());
 		return $dom;
 	}		
 	
@@ -198,7 +232,7 @@
 		return $error;		
 	}
 	
-	private function parse ($node)
+	private function parse($node)
 	{
 		if(!empty($node -> attributes) && !$node -> hasAttribute ('static'))
 		{
@@ -207,6 +241,7 @@
 				$this -> attr($attr);
 			}
 		}
+
 		if($node -> hasChildNodes())
 		{
 			$l = $node -> childNodes -> length;
@@ -218,7 +253,15 @@
 					$mname = 'parse'.ucfirst($child -> nodeName);
 					if(method_exists($this, $mname))
 					{
-						$node -> replaceChild($this->{$mname}($child), $child);
+						if($this -> stop === $node)
+						{
+							$newChild = $this -> dom -> createTextNode('');
+						}
+						else
+						{
+							$newChild = $this->{$mname}($child);
+						}
+						$node -> replaceChild($newChild, $child);
 					}
 					else
 					{
@@ -229,9 +272,11 @@
 		}
 	}
 	
-	private function attr ($attr)
+	private function attr ($attr, $strip = false)
 	{
-		$value = htmlspecialchars($this -> value ($attr -> nodeValue));
+		$value = $this -> value ($attr -> nodeValue);
+		if($strip) $value = strip_tags($value);
+		$value = htmlspecialchars($value);
 		$attr -> parentNode -> setAttribute($attr -> nodeName, $value);
 		return $value;
 	}
@@ -252,7 +297,7 @@
 	{
 		if (!strlen(trim($value))) return '';
 		$result = preg_replace_callback('/'.$this->registered.'\:([a-zA-Z0-9\_]+)/', array(&$this, 'insertData'), $value);
-		$result = preg_replace_callback("/xpath\:([\/\ \[\]a-z\'A-Z0-9\(\)\@\:\!\=\>\<\_\-]+)/", array(&$this, 'insertXML'), $result);
+		$result = preg_replace_callback("/xpath\:([\/\ \[\]a-z\'A-Z0-9\(\)\@\:\!\=\>\<\_\-\*\.]+)/", array(&$this, 'insertXML'), $result);
 		return $result;
 	}
 	private function insertData($matches)
@@ -309,9 +354,17 @@
 	
 	private function validateAction ($node)
 	{
-		if (!$node -> hasAttribute ('action'))	return true;
-		$action = $this -> value ($node -> getAttribute ('action'));
-		if (!empty ($action)) return true;
+		if(!$node->hasAttribute('action') && !$node->hasAttribute('actionnot')) return true;
+		if($node->hasAttribute('action'))
+		{
+			$action = $this -> value ($node -> getAttribute ('action'));
+			if(!empty($action)) return true;
+		}
+		if($node->hasAttribute('actionnot'))
+		{
+			$action = $this -> value ($node -> getAttribute ('actionnot'));
+			if(empty($action)) return true;
+		}
 		return false;
 	}
 	
@@ -324,11 +377,25 @@
 
 	private function cacheGet($name)
 	{
-		return apc_fetch($name);
+		if(MEM_CACHE)
+		{
+			return $this->memcon->get($name);
+		}
+		else
+		{
+			return apc_fetch($name);
+		}
 	}
 	
 	private function cacheSet($name, $content = '')
 	{
-		apc_store($name, $content, 15);
+		if(MEM_CACHE)
+		{
+			$this->memcon->set($name, $content, true, TTL_SECONDS);
+		}
+		else
+		{
+			apc_store($name, $content, TTL_SECONDS);
+		}
 	}
 ?>

@@ -1,5 +1,7 @@
 <?php
-	private function parseXsl ($node) {
+	private function parseXsl ($node)
+	{
+		if(!$node) return false;
 		if (!$node -> hasAttribute ('file')) 
 			return $this -> simpleError ($node -> nodeName, '@file is not defined');
 		if (!file_exists (VIEW_PATH.$node -> getAttribute ('file'))) 

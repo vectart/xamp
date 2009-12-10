@@ -8,12 +8,23 @@
 		return $this->xmlDump('get', $_GET);
 	}
 	
+	private function parseCookie ($node) {
+		return $this->xmlDump('cookie', $_COOKIE);
+	}
+
+	private function parseSession ($node) {
+		return $this->xmlDump('session', $_SESSION);
+	}
+	
 	private function xmlDump($name, $arr)
 	{
 		$result = $this -> makeNode ($name);
-			if (!empty ($arr)) {
-				foreach ($arr as $key => $pst) {
+			if (!empty ($arr))
+			{
+				foreach ($arr as $key => $pst)
+				{
 					if (strlen ($pst))
+					{
 						if(!is_array($pst))
 						{
 							$pst = array($pst);
@@ -22,6 +33,7 @@
 						{
 							$result -> appendChild ($this -> makeNode ($key, $val));
 						}
+					}
 				}	
 			}
 		return $result;
@@ -54,6 +66,11 @@
 			$var_value = $node -> getAttribute ('value');
 			$value = $this -> value ($var_value);
 		}
+
+		if($node -> hasAttribute ('remove'))
+		{
+			$this -> removeValue($type, $name);
+		}
 		
 		if(isset($value))
 		{
@@ -62,14 +79,21 @@
 		else
 		{
 			$value = $this -> extractValue($type, $name);
-			$var = $this -> dom -> createElement ('var', $value);
+			$var = $this -> dom -> createElement ('var', $value | '');
 			$var -> setAttribute ('name', $name);
 			$var -> setAttribute ('type', $type);
 		}
 
 		if($node -> hasChildNodes())
 		{
-			$values = split('(^\'|\',\'|\'$)', $value);
+			if(is_array($value))
+			{
+				$values = $value;
+			}
+			else
+			{
+				$values = split('(^\'|\',\'|\'$)', $value);
+			}
 			foreach($values as $val)
 			{
 				if(strlen($val))
@@ -92,12 +116,28 @@
 		if($type === 'post') $_POST[$name] = $value;
 		if($type === 'get') $_GET[$name] = $value;
 		if($type === 'session') $_SESSION[$name] = $value;
-		if($type === 'cookie') $_COOKIE[$name] = $value;
+		if($type === 'cookie')
+		{
+			$_COOKIE[$name] = $value;
+			setcookie($name, $value, time()+(60*60*24*90), '/');
+		}
 		if($type === 'globals') $this->globals[$name] = $value;
 		$var = $this -> dom -> createElement ('var', $value);
 		$var -> setAttribute ('name', $name);
 		$var -> setAttribute ('type', $type);
 		return $var;
+	}
+	private function removeValue($type, $name)
+	{
+		if($type === 'post') $_POST[$name] = null;
+		if($type === 'get') $_GET[$name] = null;
+		if($type === 'session') unset($_SESSION[$name]);
+		if($type === 'cookie')
+		{
+			$_COOKIE[$name] = null;
+			setcookie($name, '', time()+(60*60*24*90), '/');
+		}
+		if($type === 'globals') unset($this->globals[$name]);
 	}
 	private function extractValue($type, $name)
 	{
@@ -106,5 +146,6 @@
 		if($type === 'session') return $_SESSION[$name];
 		if($type === 'cookie') return $_COOKIE[$name];
 		if($type === 'globals') return $this->globals[$name];
+		if($type === 'server') return $_SERVER[$name];
 	}
 ?>

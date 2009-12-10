@@ -1,16 +1,14 @@
 <?php
+	
 	$speedAnalyze = getmicrotime();
 	$speedAnalyzeLast = 0;
 	prepare();
 	$xamp = new xamp(REQUEST_URL, $speedAnalyze);
 
-
-
-
 	function prepare()
 	{
 		require_once 'config.php';
-		file_put_contents(CONTROLLER_PATH.'xamp.log', "------------------------------------\n\n", FILE_APPEND);
+		//file_put_contents(CONTROLLER_PATH.'xamp.log', "------------------------------------\n\n", FILE_APPEND);
 		
 		header ("Content-type: text/". (XML_SOURCE == true ? 'xml' : 'html')."; charset=utf-8");
 
@@ -65,7 +63,7 @@
 		$jevix->cfgSetAutoReplace(array('+/-', '(c)', '(r)', '&'), array('±', '©', '®', '&amp;'));
 		$jevix->cfgSetXHTMLMode(true);
 		$jevix->cfgSetAutoBrMode(true);
-		$jevix->cfgSetAutoLinkMode(true);
+		$jevix->cfgSetAutoLinkMode(false);
 		$errors = null;
 		if (isset ($_POST)) foreach ($_POST as $key => $value) if(!is_array($value)) $_POST[$key] = $jevix -> parse ($value, $errors);
 		if (isset ($_GET)) foreach ($_GET as $key => $value) $_GET[$key] = $jevix -> parse ($value, $errors);
@@ -82,7 +80,7 @@
 		$diff = round(($current - $start)*1000);
 		$result = array('<-'.($diff - $speedAnalyzeLast), $name, $current, $current - $start, $diff);
 		$speedAnalyzeLast = $diff;
-		file_put_contents(CONTROLLER_PATH.'xamp.log', join("\t", $result)."\n", FILE_APPEND);
+		//file_put_contents(CONTROLLER_PATH.'xamp.log', join("\t", $result)."\n", FILE_APPEND);
 		return $result;
 	}
 	function getmicrotime() 

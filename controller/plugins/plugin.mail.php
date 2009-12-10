@@ -13,9 +13,16 @@
 		$dom -> preserveWhiteSpace = false;			
 		$dom -> xinclude ();									
 		$dom -> normalizeDocument ();
-		$body = $node -> getElementsByTagName ('body') -> item (0);
-		$html = $body -> getElementsByTagName ('xsl') -> item(0);
-		$html = $this -> parseXsl ($html);
+		$body = $node -> getElementsByTagName ('body') -> item(0);
+		if($body -> getElementsByTagName('xsl') -> length == 0)
+		{
+			$html = $this -> value($body->textContent);
+		}
+		else
+		{
+			$html = $body -> getElementsByTagName ('xsl') -> item(0);
+			$html = $this -> parseXsl($html);
+		}
 		$mail = new mail;
 						
 		$mail -> setHTML($html, 'UTF-8');			
@@ -38,9 +45,11 @@
 			}
 		}
 		
-		
-		$mail -> send($to, $subject, $from."@".$_SERVER['HTTP_HOST'], 'utf-8',($node -> hasAttribute ('gate')) ? $node -> getAttribute ('gate') : false);
+		$mail -> send($to, $subject, $from, 'utf-8',($node -> hasAttribute ('gate')) ? $node -> getAttribute ('gate') : false);
 		$result = $this -> dom -> createElement('mail', $html);
+		$result -> setAttribute('subject', $subject);
+		$result -> setAttribute('to', $to);
+		$result -> setAttribute('from', $from);
 		return $result;
 	}
 ?>
