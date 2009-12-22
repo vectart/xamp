@@ -13,7 +13,7 @@
 		header ("Content-type: text/". (XML_SOURCE == true ? 'xml' : 'html')."; charset=utf-8");
 
 		speedAnalyzer('Подключаем ядро');		
-  		if(!XAMP_REBUILD) require_once 'kernel.php';
+  		if(!XAMP_REBUILD) require_once CONTROLLER_PATH.'kernel.php';
   		
 	  	if(!class_exists('xamp') || XAMP_REBUILD)
 	  	{
@@ -21,8 +21,8 @@
 			$result .= rebuild(PLUGIN_PATH);
 	  		$result = "<?php \n class xamp \n { \n $result  \n } \n ?>";
 			$result .= rebuild(CLASS_PATH, false);
-			file_put_contents('kernel.php', $result);
-			require_once 'kernel.php';
+			file_put_contents(CONTROLLER_PATH.'kernel.php', $result);
+			require_once CONTROLLER_PATH.'kernel.php';
 	  	}
 
 		speedAnalyzer('Чистим переменные');

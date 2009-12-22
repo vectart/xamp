@@ -2,10 +2,11 @@
 	ini_set('default_charset', 'utf-8');
 
 	// Primary XAMP settings
+	define('XML_SOURCE', $_GET['xml']);
 	define('REQUEST_SOURCE', $_SERVER['REQUEST_URI']);
 	define('REQUEST_URL_PREFIX', '');
 	define('REQUEST_URL', preg_replace('#(^'.REQUEST_URL_PREFIX.'|\?'.$_SERVER['QUERY_STRING'].'$)#', '', REQUEST_SOURCE));
-	define('XML_SOURCE', $_GET['xml']);
+	define('REQUEST_DEEP', 1);
 
 	// MySQL database connection setttings
 	define('DB_HOST', 'localhost');

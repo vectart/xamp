@@ -52,6 +52,8 @@
 		}
 		
 		speedAnalyzer('Считаем $request');
+		preg_match('/^(.*?)(\?.*)?$/', $request, $request);
+		$request = $request[1];
 		$s = split('/', $request);
 		foreach ($s as $p) if (!empty ($p)) $this -> path[] = $p;
 
@@ -75,7 +77,16 @@
 	public function start()	
 	{
 		speedAnalyzer('Ищем XML и page');
-		$script_name = empty($this -> path) ? 'index' : $this -> path[0];
+		if(empty($this -> path))
+		{
+			$script_name = 'index';
+		}
+		else
+		{
+			$script_name = array_slice($this -> path, 0, REQUEST_DEEP);
+			if(!count($script_name) || count($script_name) < REQUEST_DEEP) $script_name[] = 'index';
+			$script_name = join('/', $script_name);
+		}
 		$script_xml = MODEL_PATH.$script_name.'.xml';
 		if(is_file($script_xml))
 		{
