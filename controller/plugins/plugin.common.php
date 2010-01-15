@@ -46,10 +46,7 @@
 	{
 		speedAnalyzer('Начинаем работу');
 		$this -> speedAnalyze = $speedAnalyze;
-		if(MEM_CACHE)
-		{
-			$this -> memcon = memcache_connect('127.0.0.1', 11211);
-		}
+		if(MEM_CACHE) @$this -> memcon = memcache_connect('127.0.0.1', 11211);
 		
 		speedAnalyzer('Считаем $request');
 		preg_match('/^(.*?)(\?.*)?$/', $request, $request);
@@ -83,8 +80,8 @@
 		}
 		else
 		{
-			$script_name = array_slice($this -> path, 0, REQUEST_DEEP);
-			if(!count($script_name) || count($script_name) < REQUEST_DEEP) $script_name[] = 'index';
+			$script_name = array_slice($this -> path, 0, REQUEST_INDEX);
+			if(!count($script_name) || count($script_name) < REQUEST_INDEX) $script_name[] = 'index';
 			$script_name = join('/', $script_name);
 		}
 		$script_xml = MODEL_PATH.$script_name.'.xml';
@@ -167,8 +164,8 @@
 
 		unset($xgen);
 		unset($proc);
-		if(DB_USER) unset($this -> dbcon);
-		if(MEM_CACHE) memcache_close($this -> memcon);
+		if($this -> dbcon) unset($this -> dbcon);
+		if($this -> memcon) memcache_close($this -> memcon);
 		speedAnalyzer('Финиш');
 	}
 
@@ -193,8 +190,15 @@
 		if(DB_USER)
 		{
 			$this -> dbcon = new dbcon (DB_USER, DB_PASS, DB_NAME, DB_HOST, DB_PORT, false);
-			$tables = $this -> dbcon -> query ("show table status") -> fetch_assoc_all();
-			foreach($tables as $table) $this -> tableStatus[$table['Name']] = $table['Update_time'];
+			if(!APC_CACHE && !MEM_CACHE)
+			{
+				$tables = $this -> dbcon -> query ("show table status") -> fetch_assoc_all();
+				foreach($tables as $table) $this -> tableStatus[$table['Name']] = $table['Update_time'];
+			}
+			else
+			{
+				$this -> tableStatus = null;
+			}
 		}
 		$this -> parse($page);
 	}
@@ -388,7 +392,7 @@
 
 	private function cacheGet($name)
 	{
-		if(MEM_CACHE)
+		if($this -> memcon)
 		{
 			return $this->memcon->get($name);
 		}
@@ -400,9 +404,9 @@
 	
 	private function cacheSet($name, $content = '')
 	{
-		if(MEM_CACHE)
+		if($this -> memcon)
 		{
-			$this->memcon->set($name, $content, true, TTL_SECONDS);
+			$this->memcon->set($name, $content, false, TTL_SECONDS);
 		}
 		else if(APC_CACHE)
 		{

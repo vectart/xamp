@@ -1,6 +1,6 @@
 <?php
 	private function parseImagick ($node) {
-		$xpath = new DOMXpath ($this -> config);			
+		$xpath = $this -> xpath;
 		$nodes = $xpath -> query ("*[name() = 'form' or name() = 'url' or name() = 'in']", $node);
 		if (!$nodes -> length) return  $this -> simpleError ($node -> nodeName, 'repository is not defined');
 		$output = $xpath -> query ("*[name() = 'out']", $node);

@@ -25,7 +25,7 @@
 			{
 				$sql = $node -> hasAttribute ('sqlcache') ? 'SELECT SQL_CACHE ' : 'SELECT ';
 				$this -> join = '';
-				$name = $node -> hasAttribute ('name') ? $node -> getAttribute ('name') : 'select';			
+				$name = $node -> hasAttribute ('name') ? $this->value($node -> getAttribute ('name')) : 'select';			
 				$table = $node -> getAttribute ('table');
 				$countFields = 0;
 				foreach ($node -> childNodes as $child) {
@@ -312,7 +312,7 @@
 	}	
 	
 	private function mysqlToXML ($node, $result, $breaked = false) {
-		$name = $node -> hasAttribute ('name') ? $node -> getAttribute ('name') : $node -> getAttribute ('table');
+		$name = $node -> hasAttribute ('name') ? $this->value($node -> getAttribute ('name')) : $node -> getAttribute ('table');
 		$xml = '<'.$name.'>';
 			if (count ($result)) {
 				foreach ($result as &$res) {

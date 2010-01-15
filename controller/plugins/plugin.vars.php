@@ -42,7 +42,7 @@
 	private function parsePath ($node) {
 		$path = $this -> dom -> createElement('path');
 		$req = $this -> dom -> createAttribute('request');
-		$req -> nodeValue = $this -> request;
+		$req -> nodeValue = htmlspecialchars($this -> request);
 		$path -> appendChild( $req );
 		if (count($this -> path))
 		foreach( $this -> path as $p )
