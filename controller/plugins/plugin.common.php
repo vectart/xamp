@@ -310,7 +310,8 @@
 	
 	private function value($value, $setup = false)
 	{
-		if (!strlen(trim($value))) return '';
+		if(!strlen(trim($value))) return '';
+		if(strpos($value, ':') === false) return $value;
 		$result = preg_replace_callback('/'.$this->registered.'\:([a-zA-Z0-9\_]+)/', array(&$this, 'insertData'), $value);
 		$result = preg_replace_callback("/xpath\:([\/\ \[\]a-z\'A-Z0-9\(\)\@\:\!\=\>\<\_\-\*\.]+)/", array(&$this, 'insertXML'), $result);
 		return $result;
