@@ -1,7 +1,8 @@
 <?php
 
 	private function parseSelect ($node) {
-		if (!$this -> validateAction ($node)) return  $this -> simpleError ($node -> nodeName, 'invalid action');
+		$name = $this->getNodeName($node);
+		if (!$this -> validateAction ($node)) return  $this -> simpleError ($name, 'invalid action');
 		$ch = '';
 		$sql = '';
 		$xml = false;
@@ -25,7 +26,6 @@
 			{
 				$sql = $node -> hasAttribute ('sqlcache') ? 'SELECT SQL_CACHE ' : 'SELECT ';
 				$this -> join = '';
-				$name = $node -> hasAttribute ('name') ? $this->value($node -> getAttribute ('name')) : 'select';			
 				$table = $node -> getAttribute ('table');
 				$countFields = 0;
 				foreach ($node -> childNodes as $child) {
@@ -252,7 +252,7 @@
 	private function parseInsert ($node) {	
 		if (!$this -> validateAction ($node)) return  $this -> simpleError ($node -> nodeName, 'invalid action');
 		$table = $node -> getAttribute ('table');
-		$name = $node -> hasAttribute ('name') ? $node -> getAttribute ('name') : 'insert';
+		$name = $this->getNodeName($node);
 		$parts = array ();
 	
 			foreach ($node -> childNodes as $child)
@@ -272,7 +272,7 @@
 	private function parseUpdate ($node) {	
 		if (!$this -> validateAction ($node)) return  $this -> simpleError ($node -> nodeName, 'invalid action');
 		$table = $node -> getAttribute ('table');
-		$name = $node -> hasAttribute ('name') ? $node -> getAttribute ('name') : 'update';			
+		$name = $this->getNodeName($node);
 		$parts = array ();
 	
 		foreach ($node -> childNodes as $child)
@@ -293,9 +293,9 @@
 		return 	$result;
 	}
 
-	public function parseDelete ($node) {	
+	private function parseDelete ($node) {	
 		if (!$this -> validateAction ($node)) return $this -> simpleError ($node -> nodeName, 'invalid action');
-		$name = $node -> hasAttribute ('name') ? $node -> getAttribute ('name') : 'delete';		
+		$name = $this->getNodeName($node);
 		$table = $node -> getAttribute ('table');
 		$where = $node -> getElementsByTagName ('where');
 		$limit = $this -> parseLimit ($node);						
@@ -309,10 +309,18 @@
 				$result = $this -> dom -> createElement ($name, $dbcon -> affected_rows);			
 			}else	$result = $this -> simpleError ($name, $sql);	
 		return $result;	
-	}	
+	}
+
+	private function parseSql ($node) {
+		$node -> setAttribute('naked', 'true');
+		$result = $this -> parseSelect($node);
+		$result -> firstChild -> setAttribute('last', $this->dbcon->insert_id);
+		$result -> firstChild -> setAttribute('affected', $this->dbcon->affected_rows);
+		return $result;
+	}
 	
 	private function mysqlToXML ($node, $result, $breaked = false) {
-		$name = $node -> hasAttribute ('name') ? $this->value($node -> getAttribute ('name')) : $node -> getAttribute ('table');
+		$name = $this->getNodeName($node);
 		$xml = '<'.$name.'>';
 			if (count ($result)) {
 				foreach ($result as &$res) {
@@ -330,5 +338,12 @@
 		$xml .= '</'.$name.'>';
 
 		return $xml;	
+	}
+	
+	private function getNodeName($node) {
+		$name = $node->nodeName;
+		if($node->hasAttribute('table'))  $name = $node->getAttribute('table');
+		if($node->hasAttribute('name')) $name = $this->value($node->getAttribute('name'));
+		return $name;
 	}
 ?>
