@@ -51,7 +51,7 @@
 		speedAnalyzer('Считаем $request');
 		preg_match('/^(.*?)(\?.*)?$/', $request, $request);
 		$request = $request[1];
-		$s = split('/', $request);
+		$s = explode('/', $request);
 		foreach ($s as $p) if (!empty ($p)) $this -> path[] = $p;
 
 		$this -> request = $request;

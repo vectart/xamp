@@ -51,7 +51,7 @@
 	function cleanup()
 	{
 		//include_once 'class.jevix.php';
-		$jevix = new jevix();
+		$jevix = new Jevix();
 		$jevix->cfgAllowTags(array('a', 'img', 'i', 'b', 'u', 'em', 'strong', 'sup', 'br'));
 		$jevix->cfgSetTagShort(array('br','img'));
 		$jevix->cfgSetTagCutWithContent(array('script', 'object', 'iframe', 'style'));
