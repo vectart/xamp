@@ -18,7 +18,7 @@
 	  	if(!class_exists('xamp') || XAMP_REBUILD)
 	  	{
 			speedAnalyzer('Пересобираем XAMP');
-			$result .= rebuild(PLUGIN_PATH);
+			$result = rebuild(PLUGIN_PATH);
 	  		$result = "<?php \n class xamp \n { \n $result  \n } \n ?>";
 			$result .= rebuild(CLASS_PATH, false);
 			file_put_contents(CONTROLLER_PATH.'kernel.php', $result);
